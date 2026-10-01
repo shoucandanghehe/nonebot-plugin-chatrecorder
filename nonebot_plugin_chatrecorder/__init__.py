@@ -30,5 +30,6 @@ __plugin_meta__ = PluginMetadata(
         "~dodo",
         "~satori",
         "~qq",
+        "~milky",
     },
 )

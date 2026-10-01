@@ -3,6 +3,7 @@ from . import discord as discord
 from . import dodo as dodo
 from . import feishu as feishu
 from . import kaiheila as kaiheila
+from . import milky as milky
 from . import onebot_v11 as onebot_v11
 from . import onebot_v12 as onebot_v12
 from . import qq as qq

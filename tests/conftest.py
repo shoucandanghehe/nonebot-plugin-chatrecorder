@@ -1,3 +1,6 @@
+import sys
+from tempfile import TemporaryDirectory
+
 import nonebot
 import pytest
 from nonebot.adapters.console import Adapter as ConsoleAdapter
@@ -12,13 +15,27 @@ from nonebot.adapters.satori import Adapter as SatoriAdapter
 from nonebot.adapters.telegram import Adapter as TelegramAdapter
 from nonebug import NONEBOT_INIT_KWARGS, App
 from sqlalchemy import StaticPool, delete
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+if sys.version_info >= (3, 10):
+    from nonebot.adapters.milky import Adapter as MilkyAdapter
+
+DATABASE_ENGINE = pytest.StashKey[AsyncEngine]()
+DATABASE_DIRECTORY = pytest.StashKey[TemporaryDirectory]()
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    # ORM migration disposes its engine, so an in-memory SQLite database is lost.
+    directory = TemporaryDirectory(dir=config.cache.mkdir("chatrecorder"))
+    engine = create_async_engine(
+        f"sqlite+aiosqlite:///{directory.name}/records.sqlite", poolclass=StaticPool
+    )
+    config.stash[DATABASE_ENGINE] = engine
+    config.stash[DATABASE_DIRECTORY] = directory
     config.stash[NONEBOT_INIT_KWARGS] = {
-        "sqlalchemy_database_url": "sqlite+aiosqlite:///:memory:",
-        "sqlalchemy_engine_options": {"poolclass": StaticPool},
+        "sqlalchemy_database_url": engine,
         "alembic_startup_check": False,
+        "uninfo_cache": False,
         "driver": "~fastapi+~websockets+~httpx",
     }
 
@@ -46,6 +63,13 @@ async def app():
 
 
 @pytest.fixture(scope="session", autouse=True)
+async def dispose_database_engine(nonebug_init, request: pytest.FixtureRequest):
+    yield
+    await request.config.stash[DATABASE_ENGINE].dispose()
+    request.config.stash[DATABASE_DIRECTORY].cleanup()
+
+
+@pytest.fixture(scope="session", autouse=True)
 def after_nonebot_init(after_nonebot_init: None):
     driver = nonebot.get_driver()
     driver.register_adapter(ConsoleAdapter)
@@ -58,3 +82,5 @@ def after_nonebot_init(after_nonebot_init: None):
     driver.register_adapter(QQAdapter)
     driver.register_adapter(SatoriAdapter)
     driver.register_adapter(TelegramAdapter)
+    if sys.version_info >= (3, 10):
+        driver.register_adapter(MilkyAdapter)

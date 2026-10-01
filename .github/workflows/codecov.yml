@@ -70,7 +70,7 @@ jobs:
 
       - name: Run tests
         run: |
-          sed -ie "s#sqlite+aiosqlite:///:memory:#postgresql+asyncpg://postgres:postgres@localhost:5432/postgres#g" tests/conftest.py
+          sed -ie 's#f"sqlite+aiosqlite:///{directory.name}/records.sqlite"#"postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"#g' tests/conftest.py
           sed -ie "s#StaticPool#NullPool#g" tests/conftest.py
           poetry run pytest --cov-report xml
 
@@ -110,7 +110,7 @@ jobs:
 
       - name: Run tests
         run: |
-          sed -ie "s#sqlite+aiosqlite:///:memory:#mysql+aiomysql://mysql:mysql@localhost:3306/test#g" tests/conftest.py
+          sed -ie 's#f"sqlite+aiosqlite:///{directory.name}/records.sqlite"#"mysql+aiomysql://mysql:mysql@localhost:3306/test"#g' tests/conftest.py
           sed -ie "s#StaticPool#NullPool#g" tests/conftest.py
           poetry run pytest --cov-report xml
 

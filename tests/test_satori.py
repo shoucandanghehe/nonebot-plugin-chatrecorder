@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timezone
 
 from nonebot import get_driver
@@ -135,6 +136,7 @@ async def test_record_recv_msg(app: App):
             base=Bot,
             adapter=adapter,
             self_id="2233",
+            **({"proxy_urls": []} if sys.version_info >= (3, 10) else {}),
             login=Login(
                 user=User(
                     id="2233",
@@ -203,6 +205,7 @@ async def test_record_send_msg(app: App):
             base=Bot,
             adapter=adapter,
             self_id="2233",
+            **({"proxy_urls": []} if sys.version_info >= (3, 10) else {}),
             login=Login(
                 user=User(
                     id="2233",
@@ -247,9 +250,10 @@ async def test_record_send_msg(app: App):
             )
         ],
     )
+    expected_bot_id = "kook:2233" if sys.version_info >= (3, 10) else "2233"
     await check_record(
         Session(
-            self_id="2233",
+            self_id=expected_bot_id,
             adapter="Satori",
             scope="Kaiheila",
             scene=Scene(
@@ -257,7 +261,7 @@ async def test_record_send_msg(app: App):
                 type=SceneType.CHANNEL_TEXT,
                 parent=Scene(id="5566", type=SceneType.GUILD),
             ),
-            user=UninfoUser(id="2233"),
+            user=UninfoUser(id=expected_bot_id),
         ),
         None,
         "message_sent",

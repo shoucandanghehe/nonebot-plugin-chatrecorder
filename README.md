@@ -181,6 +181,27 @@ async def _(session: Uninfo):
 - [x] DoDo
 - [x] Satori
 - [x] QQ
+- [x] Milky（需要 Python 3.10+、`nonebot-adapter-milky` 1.3.0+ 和 Uninfo 0.10.0+）
+
+Milky 记录群聊、好友私聊和临时会话的接收消息，并在发送 API 成功后记录机器人发出的群聊、好友私聊消息。
+接收记录保留原始消息段，包括被适配器处理的提及和引用；记录时间使用平台消息时间。
+Milky 的 `message_id` 为 `message_seq@message_scene:peer_id`，例如 `123@group:456`；查询时仍应限定机器人、适配器和会话。
+图片、语音和视频记录包含平台提供的资源信息或发送时的 URI，不会自动下载媒体，也不会补录平台历史。
+
+临时会话沿用 Uninfo 的归类，记录在来源群会话中，不是独立临时私聊历史；这里也不提供临时会话发送能力。
+
+当前 Uninfo 的会话缓存键不包含机器人 ID，多机器人收到同一会话时会复用错误身份。使用本适配时先关闭该缓存：
+
+```dotenv
+UNINFO_CACHE=false
+```
+
+Milky 适配尚未发布到 PyPI，可从本 fork 的功能分支安装：
+
+```shell
+uv add "nonebot-plugin-chatrecorder @ git+https://github.com/shoucandanghehe/nonebot-plugin-chatrecorder.git@feat/milky"
+uv add "nonebot-adapter-milky>=1.3.0,<2.0.0"
+```
 
 ### 鸣谢
 

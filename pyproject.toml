@@ -12,7 +12,10 @@ repository = "https://github.com/noneplugin/nonebot-plugin-chatrecorder"
 python = "^3.9"
 nonebot2 = "^2.3.0"
 nonebot-plugin-orm = ">=0.7.0,<1.0.0"
-nonebot-plugin-uninfo = ">=0.6.1,<1.0.0"
+nonebot-plugin-uninfo = [
+    { version = ">=0.6.1,<1.0.0", python = ">=3.9,<3.10" },
+    { version = ">=0.10.0,<1.0.0", python = ">=3.10" },
+]
 nonebot-plugin-localstore = ">=0.6.0,<1.0.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -39,8 +42,12 @@ nonebot-adapter-telegram = "^0.1.0b17"
 nonebot-adapter-feishu = "^2.6.2"
 nonebot-adapter-discord = "^0.1.8"
 nonebot-adapter-dodo = "^0.2.1"
-nonebot-adapter-satori = "^0.12.3"
+nonebot-adapter-satori = [
+    { version = "^0.12.3", python = ">=3.9,<3.10" },
+    { version = "^1.3.0", python = ">=3.10" },
+]
 nonebot-adapter-qq = "^1.5.0"
+nonebot-adapter-milky = { version = "^1.3.0", python = ">=3.10" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
