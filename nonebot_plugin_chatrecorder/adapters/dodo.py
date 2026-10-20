@@ -26,6 +26,7 @@ from ..message import (
     serialize_message,
 )
 from ..model import MessageRecord
+from ..session import get_send_session_persist_id
 from ..utils import record_type, remove_timezone
 
 try:
@@ -83,7 +84,7 @@ try:
                 scene=Scene(id=scene_id, type=scene_type, parent=parent),
                 user=User(id=bot.self_id),
             )
-            session_persist_id = await get_session_persist_id(session)
+            session_persist_id = await get_send_session_persist_id(session)
 
             record = MessageRecord(
                 session_persist_id=session_persist_id,

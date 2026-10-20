@@ -190,10 +190,14 @@ async def test_recorded_hook_exception_propagates(app: App, recorded_messages):
 
 async def test_record_send_msg(app: App, recorded_messages):
     """测试记录发送的消息"""
+    from nonebot_plugin_orm import get_session
     from nonebot_plugin_uninfo import Scene, SceneType, Session, User
+    from nonebot_plugin_uninfo.orm import SceneModel, SessionModel
+    from sqlalchemy import select
 
     from nonebot_plugin_chatrecorder.adapters.onebot_v11 import record_send_msg
     from nonebot_plugin_chatrecorder.message import serialize_message
+    from nonebot_plugin_chatrecorder.model import MessageRecord
 
     async with app.test_api() as ctx:
         adapter = get_driver()._adapters[Adapter.get_name()]
@@ -201,6 +205,9 @@ async def test_record_send_msg(app: App, recorded_messages):
 
     user_id = 123456
     group_id = 654321
+
+    async with get_session() as db:
+        assert (await db.scalars(select(SceneModel))).all() == []
 
     message_id = 11451433333
     message = Message("test call_api send_msg")
@@ -211,6 +218,13 @@ async def test_record_send_msg(app: App, recorded_messages):
         {"message_type": "group", "group_id": group_id, "message": message},
         {"message_id": message_id},
     )
+    async with get_session() as db:
+        created_scene = (await db.scalars(select(SceneModel))).one()
+        assert created_scene.scene_id == str(group_id)
+        assert created_scene.scene_type == SceneType.GROUP.value
+        sent_record = (await db.scalars(select(MessageRecord))).one()
+        sent_session = await db.get(SessionModel, sent_record.session_persist_id)
+        assert sent_session.scene_persist_id == created_scene.id
     await check_record(
         Session(
             self_id="11",
