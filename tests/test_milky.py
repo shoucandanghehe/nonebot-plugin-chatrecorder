@@ -225,7 +225,36 @@ async def _records_by_session():
     return result
 
 
-async def test_dispatch_records_original_message_and_member(app: App, monkeypatch):
+async def test_recorded_hook_receives_original_objects(app: App, recorded_messages):
+    from nonebot_plugin_uninfo import Scene, SceneType, Session, User
+
+    from nonebot_plugin_chatrecorder.adapters.milky import record_recv_msg
+
+    bot = _bot()
+    event = _event(
+        "group", 900, 101, 42, [{"type": "text", "data": {"text": "recorded"}}]
+    )
+    session = Session(
+        self_id="11",
+        adapter="Milky",
+        scope="QQClient",
+        scene=Scene(id="900", type=SceneType.GROUP),
+        user=User(id="101"),
+    )
+    await record_recv_msg(bot, event, session)
+
+    assert len(recorded_messages) == 1
+    recorded_bot, recorded_event, recorded_session, record = recorded_messages[0]
+    assert recorded_bot is bot
+    assert recorded_event is event
+    assert recorded_session is session
+    assert record.message_id == "42@group:900"
+    assert record.time == datetime(2023, 11, 14, 22, 13, 20)
+
+
+async def test_dispatch_records_original_message_and_member(
+    app: App, monkeypatch, recorded_messages
+):
     requests = _mock_http(
         monkeypatch,
         {
@@ -246,7 +275,11 @@ async def test_dispatch_records_original_message_and_member(app: App, monkeypatc
         },
     )
     event = _event("group", 900, 101, 42, INCOMING_SEGMENTS)
-    await _bot().handle_event(event)
+    bot = _bot()
+    await bot.handle_event(event)
+    assert len(recorded_messages) == 1
+    assert recorded_messages[0][0] is bot
+    assert recorded_messages[0][1] is event
 
     # Prove SDK preprocessing happened before the recorder's postprocessor.
     assert event.to_me

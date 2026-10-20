@@ -18,6 +18,7 @@ from nonebot_plugin_uninfo.orm import get_session_persist_id
 from typing_extensions import override
 
 from ..config import plugin_config
+from ..hooks import save_received_message
 from ..message import (
     MessageDeserializer,
     MessageSerializer,
@@ -34,7 +35,7 @@ try:
     adapter = SupportAdapter.feishu
 
     @event_postprocessor
-    async def record_recv_msg(event: MessageEvent, session: Uninfo):
+    async def record_recv_msg(bot: Bot, event: MessageEvent, session: Uninfo):
         session_persist_id = await get_session_persist_id(session)
 
         record = MessageRecord(
@@ -49,9 +50,7 @@ try:
             message=serialize_message(adapter, event.get_message()),
             plain_text=event.get_plaintext(),
         )
-        async with get_session() as db_session:
-            db_session.add(record)
-            await db_session.commit()
+        await save_received_message(bot, event, session, record)
 
     _chat_info_cache: dict[str, dict[str, Any]] = {}
 

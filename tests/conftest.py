@@ -62,6 +62,38 @@ async def app():
         await db_session.commit()
 
 
+@pytest.fixture
+async def recorded_messages(app, monkeypatch, request: pytest.FixtureRequest):
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from nonebot_plugin_chatrecorder import MessageRecord, on_message_recorded
+    from nonebot_plugin_chatrecorder import hooks
+
+    monkeypatch.setattr(hooks, "_handlers", [])
+    received = []
+    # Use another connection: StaticPool could otherwise expose uncommitted rows.
+    engine = create_async_engine(request.config.stash[DATABASE_ENGINE].url)
+
+    @on_message_recorded
+    async def recorded(bot, event, session, record):
+        assert isinstance(record.id, int)
+        assert record.id > 0
+        async with AsyncSession(engine) as reader:
+            saved = await reader.get(MessageRecord, record.id)
+            assert saved is not None
+            assert saved.session_persist_id == record.session_persist_id
+            assert saved.time == record.time
+            assert saved.type == record.type
+            assert saved.message_id == record.message_id
+            assert saved.message == record.message
+            assert saved.plain_text == record.plain_text
+        received.append((bot, event, session, record))
+
+    yield received
+
+    await engine.dispose()
+
+
 @pytest.fixture(scope="session", autouse=True)
 async def dispose_database_engine(nonebug_init, request: pytest.FixtureRequest):
     yield

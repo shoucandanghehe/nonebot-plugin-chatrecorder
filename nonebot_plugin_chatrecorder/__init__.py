@@ -6,6 +6,7 @@ require("nonebot_plugin_uninfo")
 require("nonebot_plugin_localstore")
 
 from . import adapters as adapters
+from .hooks import on_message_recorded as on_message_recorded
 from .message import deserialize_message as deserialize_message
 from .message import serialize_message as serialize_message
 from .model import MessageRecord as MessageRecord

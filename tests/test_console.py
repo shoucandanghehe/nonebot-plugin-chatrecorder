@@ -57,7 +57,7 @@ async def test_record_recv_msg(app: App):
     )
 
     with patch("nonebot_plugin_chatrecorder.adapters.console.get_id", return_value="0"):
-        await record_recv_msg(event, session)
+        await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromtimestamp(time, timezone.utc),

@@ -141,7 +141,7 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id="3344", type=SceneType.PRIVATE),
         user=User(id="3344"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromtimestamp(123456000 / 1000, timezone.utc),
@@ -159,7 +159,7 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id="1122", type=SceneType.GROUP),
         user=User(id="3344"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromtimestamp(123456000 / 1000, timezone.utc),

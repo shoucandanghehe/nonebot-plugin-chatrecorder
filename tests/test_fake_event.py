@@ -63,7 +63,7 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id=str(user_id), type=SceneType.PRIVATE),
         user=User(id=str(user_id)),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromtimestamp(time, timezone.utc),

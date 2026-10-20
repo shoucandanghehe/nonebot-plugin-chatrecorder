@@ -17,6 +17,7 @@ from nonebot_plugin_uninfo.orm import get_session_persist_id
 from typing_extensions import override
 
 from ..config import plugin_config
+from ..hooks import save_received_message
 from ..message import (
     MessageDeserializer,
     MessageSerializer,
@@ -39,7 +40,7 @@ try:
 
     @event_postprocessor
     async def record_recv_msg(
-        event: Union[GuildMessageEvent, QQMessageEvent], session: Uninfo
+        bot: Bot, event: Union[GuildMessageEvent, QQMessageEvent], session: Uninfo
     ):
         session_persist_id = await get_session_persist_id(session)
 
@@ -63,9 +64,7 @@ try:
             message=serialize_message(adapter, event.get_message()),
             plain_text=event.get_plaintext(),
         )
-        async with get_session() as db_session:
-            db_session.add(record)
-            await db_session.commit()
+        await save_received_message(bot, event, session, record)
 
     if plugin_config.chatrecorder_record_send_msg:
 

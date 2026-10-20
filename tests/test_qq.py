@@ -117,7 +117,7 @@ async def test_record_recv_msg(app: App):
         ),
         user=UninfoUser(id="3344"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime(2023, 7, 30, 0, 0, 0, 0, tzinfo=timezone.utc),
@@ -139,7 +139,7 @@ async def test_record_recv_msg(app: App):
         ),
         user=UninfoUser(id="3344"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime(2023, 7, 30, 0, 0, 0, 0, tzinfo=timezone.utc),
@@ -157,7 +157,7 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id="195747FDF0D845E98CF3886C5C7ED328", type=SceneType.GROUP),
         user=UninfoUser(id="8BE608110EAA4328A1883DEF239F5580"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromisoformat("2023-11-06T13:37:18+08:00"),
@@ -175,7 +175,7 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id="451368C569A1401D87172E9435EE8663", type=SceneType.PRIVATE),
         user=UninfoUser(id="451368C569A1401D87172E9435EE8663"),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
     await check_record(
         session,
         datetime.fromisoformat("2023-11-06T13:37:18+08:00"),

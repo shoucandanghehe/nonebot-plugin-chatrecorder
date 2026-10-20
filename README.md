@@ -121,6 +121,27 @@ async def _(session: Uninfo):
 
 详细参数及说明见代码注释
 
+接收消息提交到数据库后，可注册处理器读取已落库的记录：
+
+```python
+from nonebot import logger, require
+from nonebot.adapters import Bot, Event
+
+require("nonebot_plugin_chatrecorder")
+
+from nonebot_plugin_uninfo import Session
+from nonebot_plugin_chatrecorder import MessageRecord, on_message_recorded
+
+@on_message_recorded
+async def handle_record(
+    bot: Bot, event: Event, session: Session, record: MessageRecord
+) -> None:
+    logger.info(f"消息已保存：{record.id}，平台消息 ID：{record.message_id}")
+```
+
+处理器收到原始 `bot`、`event` 和 Uninfo `session`，`record` 的字段可直接读取。
+处理器按注册顺序依次执行，异常向上传递；机器人发送消息的记录不会触发此 API。
+
 ### 旧版本聊天记录迁移
 
 #### `0.1.x` -> `0.2.x`

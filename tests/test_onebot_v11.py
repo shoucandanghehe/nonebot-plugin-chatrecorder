@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Literal
 
+import pytest
 from nonebot import get_driver
 from nonebot.adapters.onebot.v11 import (
     Adapter,
@@ -69,10 +70,11 @@ def fake_private_message_event(**field) -> PrivateMessageEvent:
     return FakeEvent(**field)
 
 
-async def test_record_recv_msg(app: App):
+async def test_record_recv_msg(app: App, recorded_messages):
     """测试记录收到的消息"""
     from nonebot_plugin_uninfo import Scene, SceneType, Session, User
 
+    from nonebot_plugin_chatrecorder import on_message_recorded
     from nonebot_plugin_chatrecorder.adapters.onebot_v11 import record_recv_msg
     from nonebot_plugin_chatrecorder.message import serialize_message
 
@@ -84,6 +86,14 @@ async def test_record_recv_msg(app: App):
 
     private_msg = Message("test private message")
     private_msg_id = 11451422222
+
+    order = []
+
+    async def after_recorded(bot, event, session, record):
+        assert recorded_messages[-1] == (bot, event, session, record)
+        order.append(record.id)
+
+    assert on_message_recorded(after_recorded) is after_recorded
 
     async with app.test_api() as ctx:
         adapter = get_driver()._adapters[Adapter.get_name()]
@@ -103,7 +113,12 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id=str(group_id), type=SceneType.GROUP),
         user=User(id=str(user_id)),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
+    recorded_bot, recorded_event, recorded_session, record = recorded_messages[-1]
+    assert recorded_bot is bot
+    assert recorded_event is event
+    assert recorded_session is session
+    assert order == [record.id]
     await check_record(
         session,
         datetime.fromtimestamp(time, timezone.utc),
@@ -123,7 +138,12 @@ async def test_record_recv_msg(app: App):
         scene=Scene(id=str(user_id), type=SceneType.PRIVATE),
         user=User(id=str(user_id)),
     )
-    await record_recv_msg(event, session)
+    await record_recv_msg(bot, event, session)
+    recorded_bot, recorded_event, recorded_session, record = recorded_messages[-1]
+    assert recorded_bot is bot
+    assert recorded_event is event
+    assert recorded_session is session
+    assert order == [entry[3].id for entry in recorded_messages]
     await check_record(
         session,
         datetime.fromtimestamp(time, timezone.utc),
@@ -134,7 +154,41 @@ async def test_record_recv_msg(app: App):
     )
 
 
-async def test_record_send_msg(app: App):
+async def test_recorded_hook_exception_propagates(app: App, recorded_messages):
+    from nonebot_plugin_uninfo import Scene, SceneType, Session, User
+
+    from nonebot_plugin_chatrecorder import on_message_recorded
+    from nonebot_plugin_chatrecorder.adapters.onebot_v11 import record_recv_msg
+
+    error = RuntimeError("handler failed")
+
+    @on_message_recorded
+    async def failing(bot, event, session, record):
+        raise error
+
+    @on_message_recorded
+    async def not_reached(bot, event, session, record):
+        pytest.fail("later handlers must not run after a failure")
+
+    async with app.test_api() as ctx:
+        adapter = get_driver()._adapters[Adapter.get_name()]
+        bot = ctx.create_bot(base=Bot, adapter=adapter, self_id="11")
+    event = fake_group_message_event()
+    session = Session(
+        self_id="11",
+        adapter="OneBot V11",
+        scope="QQClient",
+        scene=Scene(id="10000", type=SceneType.GROUP),
+        user=User(id="10"),
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        await record_recv_msg(bot, event, session)
+    assert exc_info.value is error
+    assert len(recorded_messages) == 1
+
+
+async def test_record_send_msg(app: App, recorded_messages):
     """测试记录发送的消息"""
     from nonebot_plugin_uninfo import Scene, SceneType, Session, User
 
@@ -219,3 +273,4 @@ async def test_record_send_msg(app: App):
         serialize_message(bot, message),
         message.extract_plain_text(),
     )
+    assert recorded_messages == []
